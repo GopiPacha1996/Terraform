@@ -17,6 +17,11 @@ resource "aws_vpc" "demo-vpc" {
         Name = "${var.env}-vpc"
     }
 }
+# singline line comment
+/*
+this is multi line 
+comment used
+*/
 
 resource "aws_subnet" "demoSubnet1"{
     vpc_id = aws_vpc.demo-vpc.id
@@ -42,9 +47,21 @@ resource "aws_internet_gateway" "demo-ig"{
         Name = "${var.env}-igw"
     }
 }
-
+/*
 resource "aws_route_table" "demo-rt"{
     vpc_id = aws_vpc.demo-vpc.id
+    route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.demo-ig.id
+  }
+  tags = {
+      Name = "${var.env}-rt"
+  }
+}
+*/
+
+resource "aws_default_route_table" "demo-rt"{
+    default_route_table_id = aws_vpc.demo-vpc.default_route_table_id
     route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.demo-ig.id
@@ -56,11 +73,11 @@ resource "aws_route_table" "demo-rt"{
 
 resource "aws_route_table_association" "rt-sub-1" {
     subnet_id = aws_subnet.demoSubnet1.id
-    route_table_id = aws_route_table.demo-rt.id
+    route_table_id = aws_default_route_table.demo-rt.id
 }
 resource "aws_route_table_association" "rt-sub-2" {
     subnet_id = aws_subnet.demoSubnet2.id
-    route_table_id = aws_route_table.demo-rt.id
+    route_table_id = aws_default_route_table.demo-rt.id
 }
 
 data "aws_ami" "myAmi" {
@@ -75,11 +92,39 @@ data "aws_ami" "myAmi" {
 output "ami-id" {
     value = data.aws_ami.myAmi.id
 }
-
+/*
 resource "aws_security_group" "demo-sg" {
     name = var.sgName
     vpc_id = aws_vpc.demo-vpc.id
     description = "this is created via TF"
+    ingress {
+    description      = "for HTTP requests"
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    }
+    ingress {
+    description      = "for ssh"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    }
+    egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+  tags = {
+      Name = "${var.env}-sg"
+  }
+}
+*/
+resource "aws_default_security_group" "demo-sg"{
+    vpc_id = aws_vpc.demo-vpc.id
     ingress {
     description      = "for HTTP requests"
     from_port        = 80
@@ -118,7 +163,7 @@ resource "aws_instance" "demoinstance"{
     instance_type= var.instance_type
     availability_zone = var.avail_zone1
     key_name = aws_key_pair.myKey.key_name
-    vpc_security_group_ids = [aws_security_group.demo-sg.id]
+    vpc_security_group_ids = [aws_default_security_group.demo-sg.id]
     subnet_id = aws_subnet.demoSubnet1.id
     associate_public_ip_address = true
     tags = {
