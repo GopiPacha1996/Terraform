@@ -139,6 +139,13 @@ resource "aws_default_security_group" "demo-sg"{
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
     }
+    ingress {
+    description      = "for ssh"
+    from_port        = 8989
+    to_port          = 8989
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    }
     egress {
     from_port        = 0
     to_port          = 0
@@ -157,7 +164,7 @@ resource "aws_key_pair" "myKey"{
 }
 
 variable instance_type{}
-
+variable priavte_key_path {}
 resource "aws_instance" "demoinstance"{
     ami = data.aws_ami.myAmi.id
     instance_type= var.instance_type
@@ -169,6 +176,26 @@ resource "aws_instance" "demoinstance"{
     tags = {
         Name = "${var.env}-ec2"
     }
+  #  user_data = 
+  connection {
+      type = "ssh"
+      host =  self.public_ip
+      user = "ec2-user"
+      private_key = file (var.priavte_key_path)
+  }
+    provisioner "file" {
+        source = "./docker.sh"
+        destination = "/home/ec2-user/ec2-docker.sh"
+}
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /home/ec2-user/ec2-docker.sh",
+      "/home/ec2-user/ec2-docker.sh",
+    ]
+  }
+  provisioner "local-exec" {
+      command = "echo ${self.public_ip} > ip.txt"
+  }
 }
 
 output "Ip" {
