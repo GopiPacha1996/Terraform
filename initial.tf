@@ -1,16 +1,3 @@
-provider "aws" {
-    region = "ap-south-1"
-}
-variable vpc_cidr {}
-variable env {}
-variable sgName{}
-variable subnet_cidr1 {}
-variable avail_zone1 {}
-variable subnet_cidr2 {}
-variable avail_zone2 {}
-variable key {}
-variable public {}
-
 resource "aws_vpc" "demo-vpc" {
     cidr_block = var.vpc_cidr
     tags = {
@@ -89,9 +76,7 @@ data "aws_ami" "myAmi" {
     }
 }
 
-output "ami-id" {
-    value = data.aws_ami.myAmi.id
-}
+
 /*
 resource "aws_security_group" "demo-sg" {
     name = var.sgName
@@ -163,8 +148,6 @@ resource "aws_key_pair" "myKey"{
     public_key = file(var.public)
 }
 
-variable instance_type{}
-variable priavte_key_path {}
 resource "aws_instance" "demoinstance"{
     ami = data.aws_ami.myAmi.id
     instance_type= var.instance_type
@@ -196,8 +179,4 @@ resource "aws_instance" "demoinstance"{
   provisioner "local-exec" {
       command = "echo ${self.public_ip} > ip.txt"
   }
-}
-
-output "Ip" {
-    value = aws_instance.demoinstance.public_ip
 }
