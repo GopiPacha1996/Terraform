@@ -8,20 +8,37 @@ module "networking" {
    avail_zone1  = var.avail_zone1
    avail_zone2  = var.avail_zone2
 }
+*/
+
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+
+  name = "demo-vpc"
+  cidr = var.root_vpc_cidr
+
+  azs             = [var.avail_zone1,var.avail_zone2]
+  public_subnets  = [var.subnet_cidr1,var.subnet_cidr2]
+  public_subnet_tags = {Name = "demo-subenets"}
+
+  tags = {
+    Name = "existimg_vpc"
+    Environment = "dev"
+  }
+}
 
 module "ec2" {
   source = "./modules/ec2"
-  vpc_id = module.networking.vpcId
+  vpc_id = module.vpc.vpc_id
   env = var.env
   key = var.key
   public = var.public
   instance_type = var.instance_type
   avail_zone1 = var.avail_zone1
-  subnet_id = module.networking.subnetId
+  subnet_id = module.vpc.public_subnets[0]
   priavte_key_path = var.priavte_key_path
 }
-*/
 
+/*
 module "s3" {
   source = "/home/ubuntu/common-modules/s3"
   bucketName = var.bucketName
@@ -36,4 +53,4 @@ module "rds" {
   dbName = var.dbName
   user = var.user
   password = var.password
-}
+}*/
