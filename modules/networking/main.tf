@@ -22,7 +22,7 @@ resource "aws_subnet" "demoSubnet2"{
         Name = "${var.env}-subnet2"
 }
 }
-
+/*
 resource "aws_internet_gateway" "demo-ig"{
     vpc_id = aws_vpc.demo-vpc.id
     tags = {
@@ -49,3 +49,4 @@ resource "aws_route_table_association" "rt-sub-2" {
     subnet_id = aws_subnet.demoSubnet2.id
     route_table_id = aws_default_route_table.demo-rt.id
 }
+*/

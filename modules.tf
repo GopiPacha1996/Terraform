@@ -1,4 +1,4 @@
-/*
+
 module "networking" {
    source = "./modules/networking/"
    vpc_cidr = var.root_vpc_cidr
@@ -8,8 +8,17 @@ module "networking" {
    avail_zone1  = var.avail_zone1
    avail_zone2  = var.avail_zone2
 }
-*/
 
+
+terraform {
+  backend "s3" {
+    bucket = "tf-backend-statefile"
+    key    = "qa.tfstate"
+    region = "ap-south-1"
+
+  }
+}
+/*
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
@@ -38,7 +47,7 @@ module "ec2" {
   priavte_key_path = var.priavte_key_path
 }
 
-/*
+
 module "s3" {
   source = "/home/ubuntu/common-modules/s3"
   bucketName = var.bucketName
