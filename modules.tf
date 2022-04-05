@@ -1,4 +1,4 @@
-
+/*
 module "networking" {
    source = "./modules/networking/"
    vpc_cidr = var.root_vpc_cidr
@@ -8,17 +8,6 @@ module "networking" {
    avail_zone1  = var.avail_zone1
    avail_zone2  = var.avail_zone2
 }
-
-
-terraform {
-  backend "s3" {
-    bucket = "tf-backend-statefile"
-    key    = "qa.tfstate"
-    region = "ap-south-1"
-
-  }
-}
-/*
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
@@ -34,7 +23,6 @@ module "vpc" {
     Environment = "dev"
   }
 }
-
 module "ec2" {
   source = "./modules/ec2"
   vpc_id = module.vpc.vpc_id
@@ -46,7 +34,6 @@ module "ec2" {
   subnet_id = module.vpc.public_subnets[0]
   priavte_key_path = var.priavte_key_path
 }
-
 
 module "s3" {
   source = "/home/ubuntu/common-modules/s3"
@@ -63,3 +50,50 @@ module "rds" {
   user = var.user
   password = var.password
 }*/
+
+terraform {
+  backend "s3" {
+    bucket = "tf-backend-statefile"
+    key    = "qa.tfstate"
+    region = "ap-south-1"
+
+  }
+}
+
+variable subnets_cidr {
+  description = "list of subnet cidrs"
+  type = list(string)
+  default = ["10.0.0.0/24","10.0.1.0/24"]
+}
+variable azs {
+  type = list
+  default = ["us-east-1a","us-east-1b","us-east-1c"]
+}
+
+resource "aws_vpc" "demo-vpc" {
+    cidr_block = var.root_vpc_cidr
+    tags = {
+        Name = "${var.env}-vpc"
+    }
+}
+resource "aws_subnet" "subnet"{
+    vpc_id = aws_vpc.demo-vpc.id
+    count = length(var.subnets_cidr)
+    cidr_block = element (var.subnets_cidr,count.index)
+    availability_zone = element(var.azs,count.index)
+    tags = {
+        Name = "${var.env}-subnet-${count.index+1}"
+    }
+}
+resource "aws_default_route_table" "demo-rt"{
+    default_route_table_id = aws_vpc.demo-vpc.default_route_table_id
+  tags = {
+      Name = "${var.env}-rt"
+  }
+}
+
+resource "aws_route_table_association" "rt-sub-1" {
+    count = length(var.subnets_cidr)
+    subnet_id = element(aws_subnet.subnet.*.id,count.index)
+    route_table_id = aws_default_route_table.demo-rt.id
+}
